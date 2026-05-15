@@ -17,7 +17,7 @@ export async function fetchCharacters(
     const params: Record<string, string> = {page: String(page)};
 
     if (filters.name) params.name = filters.name;
-    if (filters.status) params.status = filters.status.toLowerCase();
+    if (filters.status) params.status = filters.status;
 
     const {data} = await client.get<PaginatedResponse<Character>>('/character', {params})
     return data

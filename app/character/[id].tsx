@@ -1,9 +1,10 @@
+import { fetchCharacter } from '@/services/api';
+import { useFavoritesStore } from '@/store/favorites-store';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
-import { fetchCharacter } from '@/services/api';
-import { useFavoritesStore } from '@/store/favorites-store';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 const STATUS_BADGE = {
   light: {
@@ -26,8 +27,9 @@ export default function CharacterDetailScreen() {
     queryFn: () => fetchCharacter(Number(id)),
   });
 
-  const { isFavorite, addFavorite, removeFavorite } = useFavoritesStore();
-  const favorited = character ? isFavorite(character.id) : false;
+  const favorited = useFavoritesStore(s => character ? s.favorites.some(c => c.id === character.id) : false);
+  const addFavorite = useFavoritesStore(s => s.addFavorite);
+  const removeFavorite = useFavoritesStore(s => s.removeFavorite);
 
   if (isLoading) return (
     <View className="flex-1 bg-white dark:bg-gray-900 items-center justify-center">

@@ -17,8 +17,9 @@ interface Props {
 }
 
 export function CharacterCard({ character, onPress, index = 0 }: Props) {
-  const { isFavorite, addFavorite, removeFavorite } = useFavoritesStore();
-  const favorited = isFavorite(character.id);
+  const favorited = useFavoritesStore(s => s.favorites.some(c => c.id === character.id));
+  const addFavorite = useFavoritesStore(s => s.addFavorite);
+  const removeFavorite = useFavoritesStore(s => s.removeFavorite);
 
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({

@@ -1,8 +1,8 @@
+import { CharacterCard } from '@/components/character-card';
+import { useFavoritesStore } from '@/store/favorites-store';
 import { useRouter } from 'expo-router';
 import { FlatList, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CharacterCard } from '@/components/character-card';
-import { useFavoritesStore } from '@/store/favorites-store';
 
 export default function FavoritesScreen() {
   const router = useRouter();

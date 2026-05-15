@@ -1,10 +1,13 @@
 import { CharacterCard } from '@/components/character-card';
+import { SkeletonCard } from '@/components/skeleton-card';
+import { useDebounce } from '@/hooks/use-debounce';
 import { CharacterFilters, fetchCharacters } from '@/services/api';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, Text, TextInput, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 const STATUS_FILTERS: Array<{ label: string; value: CharacterFilters['status'] }> = [
   { label: 'All', value: '' },
@@ -19,11 +22,12 @@ export default function CharactersScreen() {
   const colorScheme = useColorScheme();
   const [name, setName] = useState('');
   const [status, setStatus] = useState<CharacterFilters['status']>('');
+  const debouncedName = useDebounce(name);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, refetch, isRefetching } =
     useInfiniteQuery({
-      queryKey: ['characters', name, status],
-      queryFn: ({ pageParam }) => fetchCharacters(pageParam, { name, status }),
+      queryKey: ['characters', debouncedName, status],
+      queryFn: ({ pageParam }) => fetchCharacters(pageParam, { name: debouncedName, status }),
       initialPageParam: 1,
       getNextPageParam: (lastPage, allPages) =>
         lastPage.info.next ? allPages.length + 1 : undefined,
@@ -60,32 +64,36 @@ export default function CharactersScreen() {
         </View>
       </View>
 
-      <FlatList
-        data={characters}
-        keyExtractor={(item) => String(item.id)}
-        renderItem={({ item, index }) => (
-          <CharacterCard
-            character={item}
-            index={index}
-            onPress={() => router.push({ pathname: '/character/[id]', params: { id: item.id } })}
-          />
-        )}
-        contentContainerStyle={{ paddingTop: 12, paddingBottom: 24, flexGrow: 1 }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#22c55e" colors={['#22c55e']} />}
-        onEndReached={() => { if (hasNextPage) fetchNextPage(); }}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={isFetchingNextPage ? <ActivityIndicator color="#22c55e" style={{ paddingVertical: 16 }} /> : null}
-        ListEmptyComponent={
-          <View className="flex-1 items-center justify-center mt-32">
-            {isLoading
-              ? <ActivityIndicator size="large" color="#22c55e" />
-              : isError
-                ? <Text className="text-gray-400 dark:text-gray-500 text-base">Ωχ αμάν...</Text>
+      {isLoading && characters.length === 0 ? (
+        <View style={{ paddingTop: 12, paddingBottom: 24 }}>
+          {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} index={i} />)}
+        </View>
+      ) : (
+        <FlatList
+          data={characters}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={({ item, index }) => (
+            <CharacterCard
+              character={item}
+              index={index}
+              onPress={() => router.push({ pathname: '/character/[id]', params: { id: item.id } })}
+            />
+          )}
+          contentContainerStyle={{ paddingTop: 12, paddingBottom: 24, flexGrow: 1 }}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#22c55e" colors={['#22c55e']} />}
+          onEndReached={() => { if (hasNextPage) fetchNextPage(); }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={isFetchingNextPage ? <ActivityIndicator color="#22c55e" style={{ paddingVertical: 16 }} /> : null}
+          ListEmptyComponent={
+            <View className="flex-1 items-center justify-center mt-32">
+              {isError
+                ? <Text className="text-gray-400 dark:text-gray-500 text-base">Something went wrong.</Text>
                 : <Text className="text-gray-400 dark:text-gray-500 text-base">No characters found.</Text>
-            }
-          </View>
-        }
-      />
+              }
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
