@@ -1,32 +1,39 @@
-import { useFavoritesStore } from '@/store/favorites-store';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CharacterCard } from '@/components/character-card';
+import { useFavoritesStore } from '@/store/favorites-store';
 
 export default function FavoritesScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const favorites = useFavoritesStore((state) => state.favorites);
 
   return (
-    <View className="flex-1 bg-white">
-      <Text className="text-2xl font-bold px-4 pt-12 pb-4">Favorites</Text>
+    <View className="flex-1 bg-gray-50 dark:bg-gray-950">
+      <View
+        className="bg-white dark:bg-gray-900 pb-4 px-4 border-b border-gray-100 dark:border-gray-800"
+        style={{ paddingTop: insets.top + 12, elevation: 3, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}
+      >
+        <Text className="text-2xl font-bold text-gray-900 dark:text-white">Favorites</Text>
+      </View>
       <FlatList
         data={favorites}
         keyExtractor={(item) => String(item.id)}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            className="flex-row items-center px-4 py-3 gap-3 border-b border-gray-100"
+        renderItem={({ item, index }) => (
+          <CharacterCard
+            character={item}
+            index={index}
             onPress={() => router.push({ pathname: '/character/[id]', params: { id: item.id } })}
-          >
-            <Image source={{ uri: item.image }} className="w-12 h-12 rounded-full" />
-            <View>
-              <Text className="text-base font-medium">{item.name}</Text>
-              <Text className="text-sm text-gray-500">{item.status} · {item.species}</Text>
-            </View>
-          </TouchableOpacity>
+          />
         )}
+        contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
         ListEmptyComponent={
-          <Text className="text-center mt-20 text-gray-400">No favorites yet.</Text>
+          <View className="items-center justify-center mt-32">
+            <Text className="text-5xl mb-3">🤍</Text>
+            <Text className="text-gray-400 dark:text-gray-500 text-base">No favorites yet.</Text>
+            <Text className="text-gray-300 dark:text-gray-600 text-sm mt-1">Add characters from their detail page.</Text>
+          </View>
         }
       />
     </View>
