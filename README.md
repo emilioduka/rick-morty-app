@@ -36,20 +36,29 @@ Then press `a` for Android emulator, `i` for iOS simulator, or scan the QR code 
 
 ```
 app/
+  _layout.tsx              # Root layout — QueryClient, ThemeProvider
   (tabs)/
-    index.tsx        # Characters list
-    favorites.tsx    # Favorites tab
+    _layout.tsx            # Tab bar config
+    index.tsx              # Characters list
+    favorites.tsx          # Favorites tab
   character/
-    [id].tsx         # Character detail
+    [id].tsx               # Character detail
 components/
   character-card.tsx
   skeleton-card.tsx
+  haptic-tab.tsx
+  ui/
+    icon-symbol.tsx        # Material Icons fallback (Android/web)
+    icon-symbol.ios.tsx    # SF Symbols (iOS)
+constants/
+  theme.ts                 # Color tokens
 services/
-  api.ts             # Axios client + fetch functions
+  api.ts                   # Axios client + fetch functions
 store/
-  favorites-store.ts # Zustand store with AsyncStorage persistence
+  favorites-store.ts       # Zustand store with AsyncStorage persistence
 hooks/
   use-debounce.ts
+  use-color-scheme.ts
 types/
   index.ts
 ```
