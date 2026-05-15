@@ -1,4 +1,3 @@
-import '../global.css';
 import {
     DarkTheme,
     DefaultTheme,
@@ -7,6 +6,7 @@ import {
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
+import '../global.css';
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -25,7 +25,7 @@ export default function RootLayout() {
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="character/[id]" options={{ title: 'Character' }} />
+          <Stack.Screen name="character/[id]" options={{ title: 'Character', headerBackTitle: 'Back' }} />
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>

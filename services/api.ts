@@ -5,6 +5,11 @@ const client = axios.create({
     baseURL: 'https://rickandmortyapi.com/api',
 })
 
+const EMPTY_PAGE: PaginatedResponse<Character> = {
+    info: { count: 0, pages: 0, next: null, prev: null },
+    results: [],
+};
+
 export interface CharacterFilters {
     name?: string;
     status?: 'Alive' | 'Dead' | 'unknown' | '';
@@ -19,8 +24,13 @@ export async function fetchCharacters(
     if (filters.name) params.name = filters.name;
     if (filters.status) params.status = filters.status;
 
-    const {data} = await client.get<PaginatedResponse<Character>>('/character', {params})
-    return data
+    try {
+        const { data } = await client.get<PaginatedResponse<Character>>('/character', { params });
+        return data;
+    } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.status === 404) return EMPTY_PAGE;
+        throw err;
+    }
 }
 
 export async function fetchCharacter(id: number): Promise<Character> {
