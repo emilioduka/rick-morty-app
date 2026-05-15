@@ -1,107 +1,69 @@
-import { Image } from "expo-image";
-import { Platform, StyleSheet } from "react-native";
+import { CharacterFilters, fetchCharacters } from '@/services/api';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { ActivityIndicator, FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-import { HelloWave } from "@/components/hello-wave";
-import ParallaxScrollView from "@/components/parallax-scroll-view";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { Link } from "expo-router";
+const STATUS_FILTERS: Array<{label: string, value: CharacterFilters['status']}> = [
+  {label: 'All', value: ''},
+  {label: 'Alive', value: 'Alive'},
+  {label: 'Dead', value: 'Dead'},
+  {label: 'Unknown', value: 'unknown'},
+]
 
-export default function HomeScreen() {
+export default function CharactersScreen() {
+  const router = useRouter();
+  const [name, setName] = useState('');
+  const [status, setStatus] = useState<CharacterFilters['status']>('')
+
+  const {data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError} =
+    useInfiniteQuery({
+      queryKey: ['characters', name, status],
+      queryFn: ({ pageParam }) => fetchCharacters(pageParam, {name, status}),
+      initialPageParam: 1,
+      getNextPageParam: (lastPage, allPages) =>
+        lastPage.info.next ? allPages.length +1 : undefined});
+  
+  const characters = data?.pages.flatMap((page) => page.results) ?? [];
+
+  if (isLoading) return <ActivityIndicator className="flex-1" />;
+  if (isError) return <Text className="flex-1 text-center mt-10">Ωχ αμάν...</Text>
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/partial-react-logo.png")}
-          style={styles.reactLogo}
-        />
-      }
-    >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit{" "}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText>{" "}
-          to see changes. Press{" "}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: "cmd + d",
-              android: "cmd + m",
-              web: "F12",
-            })}
-          </ThemedText>{" "}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction
-              title="Action"
-              icon="cube"
-              onPress={() => alert("Action pressed")}
-            />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert("Share pressed")}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert("Delete pressed")}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">
-            npm run reset-project
-          </ThemedText>{" "}
-          to get a fresh <ThemedText type="defaultSemiBold">app</ThemedText>{" "}
-          directory. This will move the current{" "}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{" "}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View className="flex-1 bg-white">
+      <TextInput
+        className="mx-4 mt-4 px-4 py-2 border border-gray-300 rounded-xl"
+        placeholder="Search characters..."
+        value={name}
+        onChangeText={setName}
+      />
+      <View className="flex-row gap-2 px-4 my-3">
+        {STATUS_FILTERS.map((f) => (
+          <TouchableOpacity
+            key={f.value}
+            onPress={() => setStatus(f.value)}
+            className={`px-3 py-1 rounded-full border ${status === f.value ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}
+          >
+            <Text className={status === f.value ? 'text-white' : 'text-gray-600'}>{f.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <FlatList
+        data={characters}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            className="flex-row items-center px-4 py-3 border-b border-gray-100"
+            onPress={() => router.push({ pathname: '/character/[id]', params: { id: item.id } })}
+          >
+            <Text className="text-base font-medium">{item.name}</Text>
+          </TouchableOpacity>
+        )}
+        onEndReached={() => { if (hasNextPage) fetchNextPage(); }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={isFetchingNextPage ? <ActivityIndicator className="py-4" /> : null}
+        ListEmptyComponent={<Text className="text-center mt-10 text-gray-400">No characters found.</Text>}
+      />
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: "absolute",
-  },
-});
